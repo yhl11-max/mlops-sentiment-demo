@@ -38,3 +38,28 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t mlops-sentiment-ci .
+
+  deploy:
+    name: Build environment image
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create environment file
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "APP_ENV=production" > .env
+            echo "MODEL_PATH=/app/ml/model.joblib" >> .env
+            echo "DVC_SAS_TOKEN=${{ secrets.PROD_DVC_SAS_TOKEN }}" >> .env
+          else
+            echo "APP_ENV=staging" > .env
+            echo "MODEL_PATH=/app/ml/model.joblib" >> .env
+            echo "DVC_SAS_TOKEN=${{ secrets.STAGING_DVC_SAS_TOKEN }}" >> .env
+          fi
+          test -s .env
+
+      - name: Build Docker image
+        run: docker build -t sentiment-app-${{ github.ref_name }} .
