@@ -27,7 +27,8 @@ Required repository secrets:
 ## How to run locally
 
 1. Clone the repository.
-2. Run `dvc pull` to fetch the dataset.
-3. Train the model with `python -m ml.train`.
-4. Build the image: `docker build -t sentiment-app .`
-5. Run it: `docker run -p 8000:8000 --env-file .env sentiment-app`
+2. Configure the DVC remote token (ask the team; it is not committed):
+   dvc remote modify --local azure sas_token "<token>"
+3. Run `dvc pull` to fetch the dataset and the trained model.
+4. Start the service: `uvicorn app.main:app --host 127.0.0.1 --port 8000`
+5. Open http://127.0.0.1:8000/ui
