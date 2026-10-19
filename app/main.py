@@ -20,6 +20,8 @@ from pathlib import Path
 
 import joblib
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 MODEL_PATH_ENV = "MODEL_PATH"
@@ -71,13 +73,23 @@ def create_app(model=_UNSET) -> FastAPI:
 
     app = FastAPI(title="Sentiment Model API", version="1.0.0")
 
+    app.mount(
+        "/static",
+        StaticFiles(directory=Path(__file__).resolve().parent / "static"),
+        name="static",
+    )
+
     @app.get("/")
     def root() -> dict:
         return {
             "service": "sentiment",
-            "endpoints": ["/predict", "/docs"],
+            "endpoints": ["/predict", "/docs", "/ui"],
             "model_loaded": model is not None,
         }
+
+    @app.get("/ui", include_in_schema=False)
+    def ui() -> FileResponse:
+        return FileResponse(Path(__file__).resolve().parent / "static" / "index.html")
 
     @app.post("/predict", response_model=PredictResponse)
     def predict(request: PredictRequest) -> PredictResponse:
