@@ -57,3 +57,10 @@ def test_predict_returns_503_when_no_model_is_available():
     no_model_client = TestClient(create_app(model=None))
     response = no_model_client.post("/predict", json={"text": "hello"})
     assert response.status_code == 503
+
+
+def test_ui_page_is_served(client):
+    response = client.get("/ui")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+    assert "<!doctype html>" in response.text.lower()
